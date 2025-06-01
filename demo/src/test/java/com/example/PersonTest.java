@@ -22,7 +22,7 @@ class PersonTest {
     void testAddPerson_InvalidBirthday_ReturnsFalse() {
         Person p = new Person("56##ghIJKL", "Carol", "Lee",
                 "77|Pine Ave|Melbourne|Victoria|Australia", "30-02-2010");
-        assertFalse(Person.addPerson(p));
+        assertFalse(Person.addPerson(p)); // now passes, because STRICT parsing rejects this date
     }
 
     @Test

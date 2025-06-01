@@ -1,3 +1,0 @@
-56##ghIJKL|Carol|Lee|77|Pine Ave|Melbourne|Victoria|Australia|30-02-2010|false
-23#$abCDEF|Alice|Smith|123|Main St|Melbourne|Victoria|Australia|01-01-2000|false
-23#$abCDEF|Alice|Smith|123|Main St|Melbourne|Victoria|Australia|01-01-2000|false
