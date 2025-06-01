@@ -20,6 +20,7 @@ jobs:
       # ← add working-directory here
      
       - name: Run tests
+        working-directory: demo
         run: mvn test 
         # This step runs the command mvn test, which is a Maven command to run the tests in your project.
         # Maven is a build automation tool used primarily for Java projects. 
