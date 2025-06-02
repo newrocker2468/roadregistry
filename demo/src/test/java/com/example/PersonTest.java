@@ -59,18 +59,15 @@ void testUpdateDetails_EvenIdChangeID_Fails() {
 }
 @Test
 void testAddDemerits_Under21BelowThreshold_NoSuspend() {
-    // Person is under 21 (born 01-01-2007)
-    Person p = new Person("77^^zzAA", "Teen", "Driver",
+    Person p = new Person("23@#xyLMNO", "Teen", "Driver",
             "5|Fifth St|Melbourne|Victoria|Australia", "01-01-2007");
 
-    // Ensure person is added
-    assertTrue(Person.addPerson(p));
+    assertTrue(Person.addPerson(p));  // ✅ Now passes
 
-    // Add 4 points — under threshold (6 for <21)
     String result = Person.addDemeritPoints(p.getId(), "01-01-2024", 4);
-
     assertEquals("Success", result);
 }
+
 
 
 @Test
