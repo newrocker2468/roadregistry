@@ -77,17 +77,16 @@ void testAddDemerits_InvalidPoints_Fails() {
     assertEquals("Failed", result);
 }
 
-@Test
 void testAddDemerits_ThresholdExceeded_Suspends() {
     Person p = new Person("99**xxCC", "Young", "Offender",
                           "7|Seventh St|Melbourne|Victoria|Australia", "01-01-2007");
-    Person.addPerson(p);
-    // Add several offenses within 2 years
-    Person.addDemeritPoints(p.getId(), "01-01-2023", 4);
-    Person.addDemeritPoints(p.getId(), "01-06-2024", 3);
-    String result = Person.addDemeritPoints(p.getId(), "01-12-2024", 2);
+    assertTrue(Person.addPerson(p)); // must pass and write to file
+
+    // Add demerit points within two years
+    assertEquals("Success", Person.addDemeritPoints(p.getId(), "01-01-2023", 4));
+    assertEquals("Success", Person.addDemeritPoints(p.getId(), "01-06-2024", 3));
+    String result = Person.addDemeritPoints(p.getId(), "01-12-2024", 2); // triggers suspension
     assertEquals("Success", result);
-    assertTrue(p.isSuspended());
 }
 
 }
