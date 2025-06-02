@@ -206,7 +206,7 @@ public class Person {
         // Validate date format
         LocalDate offense;
         try {
-                offense = LocalDate.parse(offenseDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                offense = LocalDate.parse(offenseDate, DateTimeFormatter.ofPattern("DD-MM-YYYY"));
         } catch (DateTimeParseException ex) {
             return "Failed";
         }
