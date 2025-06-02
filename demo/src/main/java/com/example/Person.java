@@ -27,7 +27,7 @@ public class Person {
 
     private static final DateTimeFormatter DTF = DateTimeFormatter
             .ofPattern("dd-MM-uuuu")
-            .withResolverStyle(ResolverStyle.STRICT);
+         .withResolverStyle(ResolverStyle.STRICT);
 
     public Person(String id, String firstName, String lastName, String address, String birthDate) {
         this.id = id;

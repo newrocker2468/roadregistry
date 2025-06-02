@@ -1,0 +1,3 @@
+23#$abCDEF|Alice|Smith|123|Main St|Melbourne|Victoria|Australia|01-01-2000|false
+23#$abCDEE|Bob|Jones|10|Oak Rd|Melbourne|Victoria|Australia|31-12-1999|false
+23#$abCDEF|Alice|Smith|123|Main St|Melbourne|Victoria|Australia|01-01-2000|false
