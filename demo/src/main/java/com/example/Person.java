@@ -114,7 +114,6 @@ public class Person {
      */
     public static boolean updatePersonalDetails(Person updatedPerson) {
         String targetId = updatedPerson.id;
-        String targetBirth = updatedPerson.birthDate;
         boolean birthdayChanged = false;
         try {
             // Read all lines, modify the matching entry, then rewrite file
