@@ -39,33 +39,41 @@ private static final String PERSONS_FILE = "persons.txt";
 
     // ...existing code...
 
-    public static boolean addPerson(Person person) {
-        // ...existing code...
-        // Validate address: must be "StreetNumber|Street|City|Victoria|Country"
-        String[] parts = person.address.split("\\|");
-        if (parts.length != 5 || !parts[3].equals("Victoria")) {
-            return false;
-        }
-        // ...existing code...
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(PERSONS_FILE, true))) {
-            // id|firstName|lastName|streetNumber|street|city|Victoria|country|birthDate|suspended
-            String[] addrParts = person.address.split("\\|");
-            String line = String.join("|",
-                person.id,
-                person.firstName,
-                person.lastName,
-                addrParts[0], addrParts[1], addrParts[2], addrParts[3], addrParts[4],
-                person.birthDate,
-                "false"
-            );
-            writer.write(line);
-            writer.newLine();
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
+public static boolean addPerson(Person person) {
+    // Validate ID: must be exactly 10 characters and contain only allowed characters
+    if (person.id == null || person.id.length() != 10 || !person.id.matches("[A-Za-z0-9@#$%&]+")) {
+        return false;
     }
+    // Validate address: must be "StreetNumber|Street|City|Victoria|Country"
+    String[] parts = person.address.split("\\|");
+    if (parts.length != 5 || !parts[3].equals("Victoria")) {
+        return false;
+    }
+    // Validate birthDate format
+    try {
+        LocalDate.parse(person.birthDate, DTF);
+    } catch (DateTimeParseException e) {
+        return false;
+    }
+    // ...existing code for writing to file...
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(PERSONS_FILE, true))) {
+        String[] addrParts = person.address.split("\\|");
+        String line = String.join("|",
+            person.id,
+            person.firstName,
+            person.lastName,
+            addrParts[0], addrParts[1], addrParts[2], addrParts[3], addrParts[4],
+            person.birthDate,
+            "false"
+        );
+        writer.write(line);
+        writer.newLine();
+        return true;
+    } catch (IOException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
 
     public String getId() {
         return this.id;
