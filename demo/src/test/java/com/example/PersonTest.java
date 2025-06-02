@@ -57,4 +57,37 @@ void testUpdateDetails_EvenIdChangeID_Fails() {
                                 "4|Fourth St|Melbourne|Victoria|Australia", "10-10-1990");
     assertFalse(Person.updatePersonalDetails(updated));
 }
+@Test
+void testAddDemerits_Under21BelowThreshold_NoSuspend() {
+    // Person age 20
+    Person p = new Person("77^^zzAA", "Teen", "Driver",
+                          "5|Fifth St|Melbourne|Victoria|Australia", "01-01-2005");
+    Person.addPerson(p);
+    String result = Person.addDemeritPoints(p.getId(), "01-01-2024", 4);
+    assertEquals("Success", result);
+    assertFalse(p.isSuspended());
+}
+
+@Test
+void testAddDemerits_InvalidPoints_Fails() {
+    Person p = new Person("88&&yyBB", "Risky", "Road",
+                          "6|Sixth St|Melbourne|Victoria|Australia", "01-01-1990");
+    Person.addPerson(p);
+    String result = Person.addDemeritPoints(p.getId(), "15-07-2024", 7);
+    assertEquals("Failed", result);
+}
+
+@Test
+void testAddDemerits_ThresholdExceeded_Suspends() {
+    Person p = new Person("99**xxCC", "Young", "Offender",
+                          "7|Seventh St|Melbourne|Victoria|Australia", "01-01-2007");
+    Person.addPerson(p);
+    // Add several offenses within 2 years
+    Person.addDemeritPoints(p.getId(), "01-01-2023", 4);
+    Person.addDemeritPoints(p.getId(), "01-06-2024", 3);
+    String result = Person.addDemeritPoints(p.getId(), "01-12-2024", 2);
+    assertEquals("Success", result);
+    assertTrue(p.isSuspended());
+}
+
 }
