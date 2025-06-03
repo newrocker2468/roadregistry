@@ -2,6 +2,7 @@ package com.example;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class Person {
 
     private static final DateTimeFormatter DTF = DateTimeFormatter
             .ofPattern("dd-MM-uuuu")
-            .withResolverStyle(ResolverStyle.STRICT);.withResolverStyle(ResolverStyle.STRICT);
+            .withResolverStyle(ResolverStyle.STRICT);
 
     public Person(String id, String firstName, String lastName, String address, String birthDate) {
         this.id = id;
@@ -42,7 +43,7 @@ public class Person {
         this.lastName = lastName;
         this.address = address;
         this.birthDate = birthDate;
-
+        this.isSuspended = false;
     }
 
     public String getId() {
@@ -417,4 +418,3 @@ public class Person {
         return id.charAt(0);
     }
 }
-// ...existing code...
