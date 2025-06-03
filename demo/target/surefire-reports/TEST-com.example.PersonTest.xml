@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.example.PersonTest" time="0.072" tests="9" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.example.PersonTest" time="0.095" tests="9" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -15,7 +15,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Eclipse Adoptium\jdk-21.0.7.6-hotspot\bin"/>
-    <property name="sun.java.command" value="C:\Users\newro\AppData\Local\Temp\surefire3935370368901921087\surefirebooter2936847483383335757.jar C:\Users\newro\AppData\Local\Temp\surefire3935370368901921087 2025-06-03T16-40-39_418-jvmRun1 surefire3193147171262644472tmp surefire_02228157006827285013tmp"/>
+    <property name="sun.java.command" value="C:\Users\newro\AppData\Local\Temp\surefire1864989649502856775\surefirebooter792502962157507562.jar C:\Users\newro\AppData\Local\Temp\surefire1864989649502856775 2025-06-03T17-27-09_288-jvmRun1 surefire12654398526619091350tmp surefire_08717806937589946753tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="G:\softwareassign\roadregistry\demo\target\test-classes;G:\softwareassign\roadregistry\demo\target\classes;C:\Users\newro\.m2\repository\org\junit\jupiter\junit-jupiter\5.9.2\junit-jupiter-5.9.2.jar;C:\Users\newro\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.9.2\junit-jupiter-api-5.9.2.jar;C:\Users\newro\.m2\repository\org\opentest4j\opentest4j\1.2.0\opentest4j-1.2.0.jar;C:\Users\newro\.m2\repository\org\junit\platform\junit-platform-commons\1.9.2\junit-platform-commons-1.9.2.jar;C:\Users\newro\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\newro\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.9.2\junit-jupiter-params-5.9.2.jar;C:\Users\newro\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.9.2\junit-jupiter-engine-5.9.2.jar;C:\Users\newro\.m2\repository\org\junit\platform\junit-platform-engine\1.9.2\junit-platform-engine-1.9.2.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -30,7 +30,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\newro\AppData\Local\Temp\surefire3935370368901921087\surefirebooter2936847483383335757.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\newro\AppData\Local\Temp\surefire1864989649502856775\surefirebooter792502962157507562.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="21.0.7+6-LTS"/>
@@ -59,13 +59,13 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="65.0"/>
   </properties>
-  <testcase name="testUpdateDetails_Under18ChangeAddress_Fails" classname="com.example.PersonTest" time="0.018"/>
-  <testcase name="testUpdateDetails_EvenIdChangeID_Fails" classname="com.example.PersonTest" time="0.002"/>
-  <testcase name="testAddDemerits_ThresholdExceeded_Suspends" classname="com.example.PersonTest" time="0.027"/>
+  <testcase name="testUpdateDetails_Under18ChangeAddress_Fails" classname="com.example.PersonTest" time="0.028"/>
+  <testcase name="testUpdateDetails_EvenIdChangeID_Fails" classname="com.example.PersonTest" time="0.001"/>
+  <testcase name="testAddDemerits_ThresholdExceeded_Suspends" classname="com.example.PersonTest" time="0.038"/>
   <testcase name="testAddPerson_InvalidBirthday_ReturnsFalse" classname="com.example.PersonTest" time="0.001"/>
   <testcase name="testUpdateDetails_ChangeBirthdayAndName_Fails" classname="com.example.PersonTest" time="0.001"/>
   <testcase name="testAddDemerits_InvalidPoints_Fails" classname="com.example.PersonTest" time="0.001"/>
-  <testcase name="testAddPerson_ValidData_ReturnsTrue" classname="com.example.PersonTest" time="0.001"/>
+  <testcase name="testAddPerson_ValidData_ReturnsTrue" classname="com.example.PersonTest" time="0"/>
   <testcase name="testAddDemerits_Under21BelowThreshold_NoSuspend" classname="com.example.PersonTest" time="0.011"/>
   <testcase name="testAddPerson_InvalidID_ReturnsFalse" classname="com.example.PersonTest" time="0.001"/>
 </testsuite>

@@ -1,1 +1,7 @@
 
+34$%abXYZA|Tom|Jones|20|King St|Melbourne|Victoria|Australia|01-01-2005|true
+23#$abCDEF|Alice|Smith|123|Main St|Melbourne|Victoria|Australia|01-01-2000|false
+23@#xyLMNO|Teen|Driver|5|Fifth St|Melbourne|Victoria|Australia|01-01-2007|true
+34$%abXYZA|Tom|Jones|20|King St|Melbourne|Victoria|Australia|01-01-2005|false
+23#$abCDEF|Alice|Smith|123|Main St|Melbourne|Victoria|Australia|01-01-2000|false
+23@#xyLMNO|Teen|Driver|5|Fifth St|Melbourne|Victoria|Australia|01-01-2007|true
