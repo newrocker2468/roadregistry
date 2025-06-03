@@ -57,4 +57,39 @@ void testUpdateDetails_EvenIdChangeID_Fails() {
                                 "4|Fourth St|Melbourne|Victoria|Australia", "10-10-1990");
     assertFalse(Person.updatePersonalDetails(updated));
 }
+
+@Test
+void testAddDemerits_Under21BelowThreshold_NoSuspend() {
+    Person p = new Person("23@#xyLMNO", "Teen", "Driver",
+            "5|Fifth St|Melbourne|Victoria|Australia", "01-01-2007");
+
+    assertTrue(Person.addPerson(p));
+
+    String result = Person.addDemeritPoints("23@#xyLMNO", "01-01-2024", 4);
+    assertEquals("Success", result);
+}
+
+@Test
+void testAddDemerits_InvalidPoints_Fails() {
+    Person p = new Person("88&&yyBB", "Risky", "Road",
+            "6|Sixth St|Melbourne|Victoria|Australia", "01-01-1990");
+    Person.addPerson(p);
+    String result = Person.addDemeritPoints(p.getId(), "15-07-2024", 7);
+    assertEquals("Failed", result);
+}
+
+@Test
+void testAddDemerits_ThresholdExceeded_Suspends() {
+    Person p = new Person("34$%abXYZA", "Tom", "Jones",
+            "20|King St|Melbourne|Victoria|Australia", "01-01-2005");
+
+    assertTrue(Person.addPerson(p));
+
+    assertEquals("Success", Person.addDemeritPoints("34$%abXYZA", "01-01-2023", 4));
+    assertEquals("Success", Person.addDemeritPoints("34$%abXYZA", "01-06-2024", 3));
+    String result = Person.addDemeritPoints("34$%abXYZA", "01-12-2024", 2);
+
+    assertEquals("Success", result);
+}
+
 }

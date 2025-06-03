@@ -1,33 +1,41 @@
 package com.example;
 
-import java.time.format.ResolverStyle;
-
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.regex.*;
-import java.util.List;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Person class for RoadRegistry platform.
  * Stores person data and manages demerit points.
+ *
+ * Note: since the "address" itself contains pipe characters (e.g. "20|King
+ * St|Melbourne|Victoria|Australia"),
+ * we cannot simply do line.split("\\|") and assume fixed indexes. Instead, we
+ * treat
+ * the very last two '|'‐delimited tokens as birthDate and suspended, and
+ * everything before
+ * that (joined back together) is the address.
  */
 public class Person {
     private String id;
     private String firstName;
     private String lastName;
-    private String address; // Format: StreetNumber|Street|City|Victoria|Country
-    private String birthDate; // Format: DD-MM-YYYY
+    private String address; // e.g. "20|King St|Melbourne|Victoria|Australia"
+    private String birthDate; // "DD-MM-YYYY"
     private boolean isSuspended;
+
     private static final String PERSONS_FILE = "persons.txt";
     private static final String DEMERITS_FILE = "demerits.txt";
-    
 
     private static final DateTimeFormatter DTF = DateTimeFormatter
             .ofPattern("dd-MM-uuuu")
-         .withResolverStyle(ResolverStyle.STRICT);
+            .withResolverStyle(ResolverStyle.STRICT);
 
     public Person(String id, String firstName, String lastName, String address, String birthDate) {
         this.id = id;
@@ -38,7 +46,6 @@ public class Person {
         this.isSuspended = false;
     }
 
-    // Getter for ID (for comparison)
     public String getId() {
         return id;
     }
@@ -52,144 +59,47 @@ public class Person {
     }
 
     /**
-     * Adds a person to the registry file if all validations pass.
-     * Checks ID format, address format, and birthdate format.
+     * Adds a person to persons.txt if all validations pass.
      * Returns true if added successfully, false otherwise.
      */
     public static boolean addPerson(Person person) {
-        // Validate ID: exactly 10 chars, first two [2-9], at least 2 special chars in
-        // 3-8, last two uppercase
+        // 1) Validate ID pattern
         String id = person.id;
-        // Regex breakdown:
-        // ^ : start
-        // (?=.{10}$) : ensure length is 10
-        // (?=.*[^A-Za-z0-9].*[^A-Za-z0-9]) : at least 2 non-alphanumeric anywhere
-        // [2-9]{2} : first two chars between 2 and 9
-        // .{6} : next 6 any chars (we already ensure specials via lookahead)
-        // [A-Z]{2} : last two uppercase letters
-        // $ : end
-        Pattern idPattern = Pattern.compile("^(?=.{10}$)(?=.*[^A-Za-z0-9].*[^A-Za-z0-9])[2-9]{2}.{6}[A-Z]{2}$");
+        Pattern idPattern = Pattern.compile(
+                "^(?=.{10}$)(?=.*[^A-Za-z0-9].*[^A-Za-z0-9])[2-9]{2}.{6}[A-Z]{2}$");
         Matcher idMatcher = idPattern.matcher(id);
         if (!idMatcher.matches()) {
-            // ID did not match criteria
             return false;
         }
 
-        // Validate address: must be "StreetNumber|Street|City|Victoria|Country"
-        String[] parts = person.address.split("\\|");
-        if (parts.length != 5 || !parts[3].equals("Victoria")) {
-            // Invalid format or state not "Victoria"
+        // 2) Validate address: must have exactly 5 subfields when split on '|',
+        // and the 4th subfield (index 3) must be "Victoria".
+        String[] addrParts = person.address.split("\\|");
+        if (addrParts.length != 5 || !addrParts[3].equals("Victoria")) {
             return false;
         }
 
-        // Validate birthdate format: "DD-MM-YYYY"
+        // 3) Validate birthDate format
         try {
             LocalDate.parse(person.birthDate, DTF);
         } catch (DateTimeParseException ex) {
             return false;
         }
 
-        // All validations passed; append to persons file
+        // 4) Append to persons.txt in the form:
+        // id|firstName|lastName|<address-string>|birthDate|false
+        // (note: address-string already contains internal '|' chars)
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(PERSONS_FILE, true))) {
-            // Example file line: id|firstName|lastName|address|birthDate|suspended
+            // We do NOT re-split address here; we store it verbatim.
             String line = String.join("|",
-                    person.id, person.firstName, person.lastName, person.address, person.birthDate, "false");
+                    person.id,
+                    person.firstName,
+                    person.lastName,
+                    person.address,
+                    person.birthDate,
+                    "false");
             writer.write(line);
             writer.newLine();
-            return true;
-        } catch (IOException e) {
-            // I/O error writing file
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Updates personal details of an existing person in persons.txt.
-     * Enforces rules:
-     * - If person is under 18, address cannot be changed.
-     * - If birthday changes, no other details can change.
-     * - If original ID's first char is even, ID cannot change.
-     * Returns true if update succeeds, false if any rule is violated or I/O fails.
-     */
-    public static boolean updatePersonalDetails(Person updatedPerson) {
-        String targetId = updatedPerson.id;
-        String targetBirth = updatedPerson.birthDate;
-        boolean birthdayChanged = false;
-        try {
-            // Read all lines, modify the matching entry, then rewrite file
-            File file = new File(PERSONS_FILE);
-            if (!file.exists())
-                return false;
-
-            // Temporary storage for updated lines
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line;
-            boolean found = false;
-            List<String> allLines = new ArrayList<>();
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("\\|");
-                if (parts[0].equals(targetId) || parts[0].equals(updatedPerson.id)) {
-                    // Found the person entry
-                    found = true;
-                    String origId = parts[0];
-                    String origBirth = parts[4];
-                    String origAddress = parts[3];
-                    String origFirst = parts[1], origLast = parts[2];
-                    int age = LocalDate.now().getYear() - LocalDate.parse(origBirth, DTF).getYear();
-
-                    // Check age-based rule: under 18 cannot change address
-                    if (age < 18 && !origAddress.equals(updatedPerson.address)) {
-                        reader.close();
-                        return false;
-                    }
-                    // Check birthday-change rule
-                    if (!origBirth.equals(updatedPerson.birthDate)) {
-                        birthdayChanged = true;
-                    }
-                    // If birthday changed and any other changed, fail
-                    if (birthdayChanged) {
-                        if (!origId.equals(updatedPerson.id) ||
-                                !origFirst.equals(updatedPerson.firstName) ||
-                                !origLast.equals(updatedPerson.lastName) ||
-                                !origAddress.equals(updatedPerson.address)) {
-                            reader.close();
-                            return false;
-                        }
-                    }
-                    // Check ID parity rule: if original first digit even, cannot change ID
-                    if (Character.getNumericValue(origId.charAt(0)) % 2 == 0 &&
-                            !origId.equals(updatedPerson.id)) {
-                        reader.close();
-                        return false;
-                    }
-                    // Validate updated fields same as addPerson (except suspended flag)
-                    if (!addPerson(new Person(updatedPerson.id, updatedPerson.firstName,
-                            updatedPerson.lastName, updatedPerson.address, updatedPerson.birthDate))) {
-                        reader.close();
-                        return false;
-                    }
-                    // Write updated record (keep original suspension state)
-                    String suspendedState = parts[5];
-                    String newLine = String.join("|", updatedPerson.id, updatedPerson.firstName,
-                            updatedPerson.lastName, updatedPerson.address, updatedPerson.birthDate,
-                            suspendedState);
-                    allLines.add(newLine);
-                } else {
-                    // Keep other entries unchanged
-                    allLines.add(line);
-                }
-            }
-            reader.close();
-            if (!found)
-                return false;
-            // Rewrite entire file with updated lines
-            BufferedWriter writer = new BufferedWriter(new FileWriter(PERSONS_FILE));
-            for (String outLine : allLines) {
-                writer.write(outLine);
-                writer.newLine();
-            }
-            writer.close();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -199,104 +109,312 @@ public class Person {
 
     /**
      * Adds demerit points for a person. Validates date and point range.
-     * Sets isSuspended if thresholds are exceeded (6 if under 21, else 12 in 2
-     * years).
+     * Updates suspension status if threshold exceeded.
+     *
      * Returns "Success" if added, "Failed" otherwise.
      */
     public static String addDemeritPoints(String id, String offenseDate, int points) {
-        // Validate date format
+        // 1) Parse and validate offenseDate
         LocalDate offense;
         try {
             offense = LocalDate.parse(offenseDate, DTF);
         } catch (DateTimeParseException ex) {
             return "Failed";
         }
-        // Validate points 1-6
+
+        // 2) Validate points range 1..6
         if (points < 1 || points > 6) {
             return "Failed";
         }
-        try {
-            // Read person to get birthdate and current isSuspended
-            BufferedReader personReader = new BufferedReader(new FileReader(PERSONS_FILE));
+
+        // 3) Look up the person in persons.txt to fetch birthDate and current
+        // suspension state
+        LocalDate birth = null;
+        boolean currentlySuspended = false;
+        boolean found = false;
+
+        try (BufferedReader personReader = new BufferedReader(new FileReader(PERSONS_FILE))) {
             String line;
-            LocalDate birth = null;
-            boolean currentlySuspended = false;
-            boolean found = false;
             while ((line = personReader.readLine()) != null) {
-                String[] parts = line.split("\\|");
-                if (parts[0].equals(id)) {
-                    birth = LocalDate.parse(parts[4], DTF);
-                    currentlySuspended = Boolean.parseBoolean(parts[5]);
+                // Split into tokens. Because address has internal '|', we do a full split, then
+                // know the last two tokens are birthDate and suspended.
+                String[] fullParts = line.split("\\|");
+                int n = fullParts.length;
+                if (fullParts[0].equals(id)) {
+                    // birthDate is the second‐to‐last token:
+                    birth = LocalDate.parse(fullParts[n - 2], DTF);
+                    currentlySuspended = Boolean.parseBoolean(fullParts[n - 1]);
                     found = true;
                     break;
                 }
             }
-            personReader.close();
-            if (!found)
-                return "Failed";
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            return "Failed";
+        }
 
-            // Calculate age at offense date
-            int age = offense.getYear() - birth.getYear();
-            // Sum points in past 2 years (current offense date back 2 years)
-            LocalDate cutoff = offense.minusYears(2);
-            BufferedReader demeritReader = new BufferedReader(new FileReader(DEMERITS_FILE));
+        if (!found) {
+            return "Failed"; // no person with that ID
+        }
+
+        // 4) Compute age at offense date
+        int age = offense.getYear() - birth.getYear();
+
+        // 5) Sum all points in the last 2 years (inclusive of this offense)
+        LocalDate cutoff = offense.minusYears(2);
+        int totalPoints = points; // start with the new offense's points
+        try (BufferedReader demReader = new BufferedReader(new FileReader(DEMERITS_FILE))) {
             String dline;
-            int totalPoints = points; // include this offense
-            while ((dline = demeritReader.readLine()) != null) {
+            while ((dline = demReader.readLine()) != null) {
                 String[] dparts = dline.split("\\|");
-                if (!dparts[0].equals(id))
+                // Format in demerits.txt is: id|offenseDate|points
+                if (!dparts[0].equals(id)) {
                     continue;
+                }
                 LocalDate dDate = LocalDate.parse(dparts[1], DTF);
                 int pts = Integer.parseInt(dparts[2]);
-                if (!dDate.isBefore(cutoff) && !dDate.isAfter(offense)) {
+                // If dDate is in [cutoff .. offense], include it
+                if ((!dDate.isBefore(cutoff)) && (!dDate.isAfter(offense))) {
                     totalPoints += pts;
                 }
             }
-            demeritReader.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            return "Failed";
+        }
 
-            // Determine threshold
-            int threshold = (age < 21) ? 6 : 12;
-            boolean willSuspend = totalPoints > threshold;
+        // 6) Decide threshold
+        int threshold = (age < 21) ? 6 : 12;
+        boolean willSuspend = totalPoints > threshold;
 
-            // Append demerit record: id|offenseDate|points
-            BufferedWriter demWriter = new BufferedWriter(new FileWriter(DEMERITS_FILE, true));
+        // 7) Append this offense record to demerits.txt
+        try (BufferedWriter demWriter = new BufferedWriter(new FileWriter(DEMERITS_FILE, true))) {
             String demLine = String.join("|", id, offenseDate, Integer.toString(points));
             demWriter.write(demLine);
             demWriter.newLine();
-            demWriter.close();
-
-            // If suspension status changed to true, update person record
-            if (willSuspend && !currentlySuspended) {
-                // Update suspended status in persons file
-                updateSuspensionStatus(id, true);
-            }
-            return "Success";
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
             return "Failed";
+        }
+
+        // 8) If suspension status flips from false to true, update persons.txt
+        if (willSuspend && !currentlySuspended) {
+            try {
+                updateSuspensionStatus(id, true);
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+                return "Failed";
+            }
+        }
+
+        return "Success";
+    }
+
+    /**
+     * Helper to flip the suspended flag in persons.txt for a given ID.
+     */
+    private static void updateSuspensionStatus(String id, boolean suspend) throws IOException {
+        File file = new File(PERSONS_FILE);
+        if (!file.exists()) {
+            return;
+        }
+
+        List<String> allLines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] fullParts = line.split("\\|");
+                int n = fullParts.length;
+                if (fullParts[0].equals(id)) {
+                    // Re‐construct the last token (suspended) to "true"/"false"
+                    fullParts[n - 1] = Boolean.toString(suspend);
+                    // Re‐join everything with '|'
+                    StringBuilder sb = new StringBuilder(fullParts[0]);
+                    for (int i = 1; i < n; i++) {
+                        sb.append("|").append(fullParts[i]);
+                    }
+                    allLines.add(sb.toString());
+                } else {
+                    allLines.add(line);
+                }
+            }
+        }
+
+        // Overwrite the file with updated lines
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
+            for (String out : allLines) {
+                writer.write(out);
+                writer.newLine();
+            }
         }
     }
 
-    // Helper to update suspension flag in persons.txt
-    private static void updateSuspensionStatus(String id, boolean suspend) throws IOException {
-        File file = new File(PERSONS_FILE);
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
-        List<String> lines = new ArrayList<>();
-        while ((line = reader.readLine()) != null) {
-            String[] parts = line.split("\\|");
-            if (parts[0].equals(id)) {
-                parts[5] = Boolean.toString(suspend);
-                line = String.join("|", parts);
+    // ------------------------------------------------------------------------
+    // Note: The updatePersonalDetails(...) method below still assumes you want to
+    // do
+    // things like “if under 18, address can’t change,” etc. If you plan to use
+    // it, you will also need to adjust its splitting logic in the same way—
+    // always treating the last two tokens as birthDate+suspended, and rebuilding
+    // address from everything in between. The version below is simply a direct
+    // fix of your original, applying the same “last-two tokens are date+suspend”
+    // approach. If you do not call updatePersonalDetails in your tests, you can
+    // leave it as-is or remove it.
+    // ------------------------------------------------------------------------
+
+    /**
+     * Updates personal details of an existing person in persons.txt.
+     * Enforces rules:
+     * - If person is under 18, address cannot be changed.
+     * - If birthdate changes, no other detail can change.
+     * - If original ID’s first digit is even, ID cannot change.
+     * Returns true if update succeeds, false if any rule is violated or I/O fails.
+     */
+    public static boolean updatePersonalDetails(Person updatedPerson) {
+        String targetId = updatedPerson.id;
+        String targetBirth = updatedPerson.birthDate;
+        boolean birthdayChanged = false;
+
+        try {
+            File file = new File(PERSONS_FILE);
+            if (!file.exists()) {
+                return false;
             }
-            lines.add(line);
+
+            List<String> allLines = new ArrayList<>();
+            boolean found = false;
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] fullParts = line.split("\\|");
+                    int n = fullParts.length;
+
+                    if (fullParts[0].equals(targetId)) {
+                        found = true;
+
+                        // Reconstruct original birthDate and original address
+                        String origBirth = fullParts[n - 2];
+                        // address is everything between index 3 .. n-3, joined with '|'
+                        StringBuilder origAddrSb = new StringBuilder(fullParts[3]);
+                        for (int i = 4; i <= n - 3; i++) {
+                            origAddrSb.append("|").append(fullParts[i]);
+                        }
+                        String origAddress = origAddrSb.toString();
+
+                        String origFirst = fullParts[1];
+                        String origLast = fullParts[2];
+                        int origFirstDigit = Character.getNumericValue(origIdFirstDigit(fullParts[0]));
+                        int yearNow = LocalDate.now().getYear();
+                        int yearBirth = LocalDate.parse(origBirth, DTF).getYear();
+                        int age = yearNow - yearBirth;
+
+                        // RULE A: if under 18, address cannot change
+                        if (age < 18 && !origAddress.equals(updatedPerson.address)) {
+                            return false;
+                        }
+
+                        // RULE B: if birthdate changed, NO other field can change
+                        if (!origBirth.equals(updatedPerson.birthDate)) {
+                            birthdayChanged = true;
+                        }
+                        if (birthdayChanged) {
+                            if (!fullParts[0].equals(updatedPerson.id) ||
+                                    !origFirst.equals(updatedPerson.firstName) ||
+                                    !origLast.equals(updatedPerson.lastName) ||
+                                    !origAddress.equals(updatedPerson.address)) {
+                                return false;
+                            }
+                        }
+
+                        // RULE C: if original first digit of ID is even, cannot change ID
+                        if ((origFirstDigit % 2 == 0) && !fullParts[0].equals(updatedPerson.id)) {
+                            return false;
+                        }
+
+                        // Validate updated fields exactly as in addPerson (except suspended flag)
+                        // (We only want to validate id/firstname/lastname/address/birthdate format,
+                        // not actually append a new line—so do a “fake” Person and run the same
+                        // validation.)
+                        Person validator = new Person(
+                                updatedPerson.id,
+                                updatedPerson.firstName,
+                                updatedPerson.lastName,
+                                updatedPerson.address,
+                                updatedPerson.birthDate);
+                        // If validation fails, do NOT proceed.
+                        if (!validatePersonFormat(validator)) {
+                            return false;
+                        }
+
+                        // Rebuild this line with updated fields, preserving the original suspended
+                        // flag:
+                        String suspendedState = fullParts[n - 1];
+                        StringBuilder newLineSb = new StringBuilder(updatedPerson.id);
+                        newLineSb.append("|").append(updatedPerson.firstName)
+                                .append("|").append(updatedPerson.lastName)
+                                .append("|").append(updatedPerson.address)
+                                .append("|").append(updatedPerson.birthDate)
+                                .append("|").append(suspendedState);
+                        allLines.add(newLineSb.toString());
+                    } else {
+                        // Keep everybody else unchanged
+                        allLines.add(line);
+                    }
+                }
+            }
+
+            if (!found) {
+                return false;
+            }
+
+            // Overwrite the file with updated lines
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
+                for (String outLine : allLines) {
+                    writer.write(outLine);
+                    writer.newLine();
+                }
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
-        reader.close();
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        for (String out : lines) {
-            writer.write(out);
-            writer.newLine();
+    }
+
+    /**
+     * Helper to validate a Person’s fields without writing to file.
+     * Returns true if id/address/birthDate all pass the same checks as addPerson.
+     */
+    private static boolean validatePersonFormat(Person person) {
+        // 1) ID pattern
+        Pattern idPattern = Pattern.compile(
+                "^(?=.{10}$)(?=.*[^A-Za-z0-9].*[^A-Za-z0-9])[2-9]{2}.{6}[A-Z]{2}$");
+        Matcher idMatcher = idPattern.matcher(person.id);
+        if (!idMatcher.matches()) {
+            return false;
         }
-        writer.close();
+
+        // 2) Address must split into 5 parts and part[3] = "Victoria"
+        String[] addrParts = person.address.split("\\|");
+        if (addrParts.length != 5 || !addrParts[3].equals("Victoria")) {
+            return false;
+        }
+
+        // 3) birthDate parse
+        try {
+            LocalDate.parse(person.birthDate, DTF);
+        } catch (DateTimeParseException ex) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns the first character of an ID as a digit (e.g. '2' → 2).
+     * We assume ID always begins with a digit here (per your regex).
+     */
+    private static char origIdFirstDigit(String id) {
+        return id.charAt(0);
     }
 }
